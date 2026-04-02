@@ -65,6 +65,27 @@ function writeIntakeV2(rootPath: string, manifest: AgentIntakeManifestV2): strin
   return intakePath;
 }
 
+function sectionBullets(content: string, title: string): string[] {
+  const lines = content.split('\n');
+  const header = `## ${title}`;
+  const startIndex = lines.indexOf(header);
+  if (startIndex < 0) {
+    return [];
+  }
+
+  const bullets: string[] = [];
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index] ?? '';
+    if (line.startsWith('## ')) {
+      break;
+    }
+    if (line.startsWith('- ')) {
+      bullets.push(line);
+    }
+  }
+  return bullets;
+}
+
 test('init writes only .selirc/.seli.lock and no compat outputs', () => {
   const eccRoot = makeTempDir('seli-ecc-');
   const projectRoot = makeTempDir('seli-project-');
@@ -107,19 +128,20 @@ test('init writes only .selirc/.seli.lock and no compat outputs', () => {
   expect(skillTeam).toContain('本项目由 Seli 初始化，请参考本地技能包进行代码生成。');
 
   const agentsContract = fs.readFileSync(path.join(projectRoot, 'AGENTS.md'), 'utf8');
-  expect(agentsContract).toContain('## Agent First-Question Protocol');
-  expect(agentsContract).toContain('Required response format:');
-  expect(agentsContract).toContain('Language behavior (Chinese and English only):');
-  expect(agentsContract).toContain('If the user asks in Chinese, answer in Chinese.');
-  expect(agentsContract).toContain('If the user asks in English, answer in English.');
-  expect(agentsContract).toContain('1. `项目特点`');
-  expect(agentsContract).toContain('2. `你只需要提供`');
-  expect(agentsContract).toContain('3. `我会帮你做`');
-  expect(agentsContract).toContain('Target project absolute path.');
-  expect(agentsContract).toContain('Your team skill package root path');
-  expect(agentsContract).toContain('plan -> init/update -> doctor');
-  expect(agentsContract).toContain('source root stored in local config');
-  expect(agentsContract).toContain('(provider-local root)');
+  expect(agentsContract).toContain('## Project Context');
+  expect(agentsContract).toContain('## Response Principles');
+  expect(agentsContract).toContain('## Layer Priority');
+  expect(agentsContract).toContain('## Guardrails');
+  expect(agentsContract).toContain(
+    'Do not assume this repository is the seli source repository unless repository evidence confirms it.'
+  );
+  expect(agentsContract).not.toContain('## Agent First-Question Protocol');
+  expect(agentsContract).not.toContain('1. `项目特点`');
+  expect(agentsContract).not.toContain('## Update Workflow');
+  expect(agentsContract).not.toContain('## Tech Stack Guidance');
+  expect(agentsContract).not.toContain('## Git Management Guidance');
+  expect(agentsContract).not.toContain('## Enabled Team Providers');
+  expect(agentsContract).not.toContain('Team skill context:');
   expect(agentsContract).not.toContain(eccRoot);
   expect(agentsContract).not.toMatch(/\/Users\/|\/home\/|[A-Za-z]:\\/);
 
@@ -137,6 +159,122 @@ test('init writes only .selirc/.seli.lock and no compat outputs', () => {
     expect(skillDoc).toContain('Do not assume seli is available in PATH.');
     expect(skillDoc).toContain('Always use an explicit --project <abs-path> argument when running seli commands.');
   }
+});
+
+test('AGENTS includes project-skill blueprint context', () => {
+  const eccRoot = makeTempDir('seli-ecc-');
+  const projectRoot = makeTempDir('seli-blueprint-project-');
+  const intakeRoot = makeTempDir('seli-blueprint-intake-');
+  createFakeEccSource(eccRoot);
+
+  const intakePath = writeIntakeV2(intakeRoot, {
+    schemaVersion: 2,
+    target: { projectPath: projectRoot, requestedOperation: 'auto' },
+    providers: [{ providerId: 'ecc', rootPath: eccRoot, requestedSkills: ['frontend-patterns'] }],
+    project: {
+      projectSkillBlueprints: [
+        {
+          id: 'india-mvp-funnel',
+          description: 'Optimize onboarding and paywall conversion for India MVP.',
+          whenToUse: ['When funnel drop-off or onboarding copy changes are requested.'],
+          workflow: ['Read product docs and analytics notes before proposing funnel changes.'],
+          sourceDocumentLabels: ['India MVP PRD'],
+          relatedTeamSkills: ['frontend-patterns']
+        }
+      ]
+    }
+  });
+
+  initProject({ projectRoot, intakePath });
+
+  const agentsContract = fs.readFileSync(path.join(projectRoot, 'AGENTS.md'), 'utf8');
+  expect(agentsContract).toContain('Optimize onboarding and paywall conversion for India MVP.');
+  expect(agentsContract).toContain('When funnel drop-off or onboarding copy changes are requested.');
+  expect(agentsContract).toContain('Read product docs and analytics notes before proposing funnel changes.');
+  expect(agentsContract).toContain('Refer to project documents: India MVP PRD.');
+  expect(agentsContract).not.toContain('Team skill context:');
+  expect(agentsContract).not.toContain('## Agent First-Question Protocol');
+});
+
+test('AGENTS keeps concise bullet and length limits', () => {
+  const eccRoot = makeTempDir('seli-ecc-');
+  const projectRoot = makeTempDir('seli-compact-project-');
+  const intakeRoot = makeTempDir('seli-compact-intake-');
+  createFakeEccSource(eccRoot);
+
+  const longLine =
+    'This is a very long project guidance sentence meant to verify AGENTS truncation behavior keeps output concise even when upstream project blueprints include overly verbose descriptions and workflows that would otherwise flood the contract.';
+
+  const intakePath = writeIntakeV2(intakeRoot, {
+    schemaVersion: 2,
+    target: { projectPath: projectRoot, requestedOperation: 'auto' },
+    providers: [{ providerId: 'ecc', rootPath: eccRoot, requestedSkills: ['frontend-patterns', 'backend-patterns'] }],
+    project: {
+      projectSkillBlueprints: [
+        {
+          id: 'growth-funnel',
+          description: longLine,
+          whenToUse: [longLine, 'Handle conversion experiments.'],
+          workflow: [longLine, 'Review latest product constraints first.'],
+          sourceDocumentLabels: ['Growth Spec', 'KPI Tracker', 'Launch Checklist', 'Experiment Notes']
+        },
+        {
+          id: 'payments-compliance',
+          description: 'Keep payment copy and rules aligned with market constraints.',
+          whenToUse: ['When checkout requirements change.']
+        }
+      ]
+    }
+  });
+
+  initProject({ projectRoot, intakePath });
+
+  const agentsContract = fs.readFileSync(path.join(projectRoot, 'AGENTS.md'), 'utf8');
+  const contextBullets = sectionBullets(agentsContract, 'Project Context');
+  const principlesBullets = sectionBullets(agentsContract, 'Response Principles');
+
+  expect(contextBullets.length).toBeLessThanOrEqual(3);
+  expect(principlesBullets.length).toBeLessThanOrEqual(4);
+  for (const bullet of [...contextBullets, ...principlesBullets]) {
+    expect(bullet.length).toBeLessThanOrEqual(145);
+  }
+  expect(agentsContract).not.toContain('Team skill context:');
+  expect(agentsContract).not.toContain('## Tech Stack Guidance');
+});
+
+test('update rewrites legacy AGENTS first-question block', () => {
+  const eccRoot = makeTempDir('seli-ecc-');
+  const projectRoot = makeTempDir('seli-agents-migration-');
+  const intakeRoot = makeTempDir('seli-migration-intake-');
+  createFakeEccSource(eccRoot);
+
+  const intakePath = writeIntakeV2(intakeRoot, {
+    schemaVersion: 2,
+    target: { projectPath: projectRoot, requestedOperation: 'auto' },
+    providers: [{ providerId: 'ecc', rootPath: eccRoot }]
+  });
+
+  initProject({ projectRoot, intakePath });
+
+  fs.writeFileSync(
+    path.join(projectRoot, 'AGENTS.md'),
+    `# Repository Collaboration Contract
+
+## Agent First-Question Protocol
+
+1. \`项目特点\`
+`,
+    'utf8'
+  );
+
+  updateProject({ projectRoot, intakePath, force: true });
+
+  const agentsContract = fs.readFileSync(path.join(projectRoot, 'AGENTS.md'), 'utf8');
+  expect(agentsContract).toContain('## Project Context');
+  expect(agentsContract).toContain('## Response Principles');
+  expect(agentsContract).not.toContain('## Tech Stack Guidance');
+  expect(agentsContract).not.toContain('## Agent First-Question Protocol');
+  expect(agentsContract).not.toContain('1. `项目特点`');
 });
 
 test('plan -> update remains idempotent', () => {
