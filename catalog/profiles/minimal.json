@@ -33,7 +33,18 @@
         ]
       },
       "project": {
-        "skills": [],
+        "skills": [
+          {
+            "id": "team-skill-evolution",
+            "description": "Expand and refresh team skill coverage as the project matures.",
+            "managed": true
+          },
+          {
+            "id": "team-skill-sync",
+            "description": "Keep mounted team skills aligned with external package updates and replacements.",
+            "managed": true
+          }
+        ],
         "compatPlugin": {
           "enabled": false,
           "pluginId": "ai-tool-init-compat"

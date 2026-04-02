@@ -1,6 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const {
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { readTemplate } from './catalog.js';
+import {
   CONFIG_RELATIVE_PATH,
   LOCK_RELATIVE_PATH,
   createBootstrapConfig,
@@ -8,24 +10,30 @@ const {
   loadExistingLock,
   normalizeConfig,
   resolveConfig
-} = require('./config');
-const { readTemplate } = require('./catalog');
-const {
-  computeCurrentFingerprint,
-  getManagedFingerprint,
-  getFileContentIfExists,
-  getSymlinkTargetIfExists,
-  stableSortEntries,
-} = require('./utils');
-const {
-  renderAgentsContract,
-  renderCompatMarketplace,
-  renderCompatPluginManifest,
-  renderCompatPluginReadme,
-  renderProjectSkill
-} = require('./render');
+} from './config.js';
+import {
+  applyAgentInputsToConfig,
+  createEffectiveRunContext,
+  readIntakeIfPresent,
+  resolveBootstrapProfileId,
+  resolveRequestedOperation
+} from './intake.js';
+import { renderAgentsContract, renderCompatMarketplace, renderCompatPluginManifest, renderCompatPluginReadme, renderProjectSkill } from './render.js';
+import type {
+  AiToolInitConfig,
+  AiToolInitLock,
+  DesiredEntry,
+  DesiredFileEntry,
+  DesiredSymlinkEntry,
+  InstallCommand,
+  InstallPlan,
+  InstallPlanOperation,
+  PackageMetadata,
+  ResolvedAiToolInitConfig
+} from './types.js';
+import { getFileContentIfExists, getManagedFingerprint, getSymlinkTargetIfExists, readJson, stableSortEntries } from './utils.js';
 
-function createFileEntry(pathRelativeToProject, content, metadata = {}) {
+function createFileEntry(pathRelativeToProject: string, content: string, metadata: Omit<DesiredFileEntry, 'content' | 'path' | 'type'>): DesiredFileEntry {
   return {
     type: 'file',
     path: pathRelativeToProject,
@@ -34,7 +42,11 @@ function createFileEntry(pathRelativeToProject, content, metadata = {}) {
   };
 }
 
-function createSymlinkEntry(pathRelativeToProject, target, metadata = {}) {
+function createSymlinkEntry(
+  pathRelativeToProject: string,
+  target: string,
+  metadata: Omit<DesiredSymlinkEntry, 'path' | 'target' | 'type'>
+): DesiredSymlinkEntry {
   return {
     type: 'symlink',
     path: pathRelativeToProject,
@@ -43,7 +55,7 @@ function createSymlinkEntry(pathRelativeToProject, target, metadata = {}) {
   };
 }
 
-function maybeRelativeTarget(projectRoot, entryPath, targetPath, policy) {
+function maybeRelativeTarget(projectRoot: string, entryPath: string, targetPath: string, policy: AiToolInitConfig['policies']['symlink']): string {
   if (policy !== 'relative') {
     return targetPath;
   }
@@ -51,8 +63,13 @@ function maybeRelativeTarget(projectRoot, entryPath, targetPath, policy) {
   return path.relative(path.dirname(linkAbsolutePath), targetPath) || '.';
 }
 
-function createDesiredEntries(projectRoot, config, resolvedConfig) {
-  const entries = [];
+function createDesiredEntries(
+  projectRoot: string,
+  config: AiToolInitConfig,
+  resolvedConfig: ResolvedAiToolInitConfig
+): DesiredEntry[] {
+  const entries: DesiredEntry[] = [];
+  const projectSkillSourceRoot = path.join(projectRoot, '.codex', 'skills');
 
   entries.push(
     createFileEntry('AGENTS.md', renderAgentsContract(config, resolvedConfig), {
@@ -77,13 +94,7 @@ function createDesiredEntries(projectRoot, config, resolvedConfig) {
         managed: true
       })
     );
-    entries.push(
-      createFileEntry('.codex/skills/README.md', readTemplate('system', 'codex-skills-readme.md.tpl'), {
-        layer: 'system',
-        owner: 'system-baseline',
-        managed: true
-      })
-    );
+
     for (const agentName of config.layers.project.extraAgents) {
       if (agentName === 'explorer') {
         entries.push(
@@ -104,9 +115,18 @@ function createDesiredEntries(projectRoot, config, resolvedConfig) {
         );
       }
     }
+  }
 
+  if (config.platforms.codex.enabled || config.platforms.claude.enabled) {
+    entries.push(
+      createFileEntry('.codex/skills/README.md', readTemplate('system', 'codex-skills-readme.md.tpl'), {
+        layer: 'system',
+        owner: 'system-baseline',
+        managed: true
+      })
+    );
     for (const skill of config.layers.project.skills) {
-      if (skill.managed === false) {
+      if (!skill.managed) {
         continue;
       }
       entries.push(
@@ -141,6 +161,17 @@ function createDesiredEntries(projectRoot, config, resolvedConfig) {
         managed: true
       })
     );
+    entries.push(
+      createSymlinkEntry(
+        '.claude/skills',
+        maybeRelativeTarget(projectRoot, '.claude/skills', projectSkillSourceRoot, config.policies.symlink),
+        {
+          layer: 'project',
+          owner: 'project-skill',
+          managed: true
+        }
+      )
+    );
   }
 
   entries.push(
@@ -152,16 +183,15 @@ function createDesiredEntries(projectRoot, config, resolvedConfig) {
   );
 
   for (const provider of resolvedConfig.layers.team.providers) {
-    for (const skill of provider.skills) {
-      const absoluteTargetPath = path.join(provider.resolvedSourceRoot || '', 'skills', skill);
+    for (const skill of provider.selectedSkills) {
       const targetPath = maybeRelativeTarget(
         projectRoot,
-        `.agents/skills/${skill}`,
-        absoluteTargetPath,
+        `.agents/skills/${skill.skillId}`,
+        skill.skillPath,
         config.policies.symlink
       );
       entries.push(
-        createSymlinkEntry(`.agents/skills/${skill}`, targetPath, {
+        createSymlinkEntry(`.agents/skills/${skill.skillId}`, targetPath, {
           layer: 'team',
           owner: provider.id,
           managed: true
@@ -214,7 +244,12 @@ function createDesiredEntries(projectRoot, config, resolvedConfig) {
   return stableSortEntries(entries);
 }
 
-function buildLockContent(config, resolvedConfig, managedEntries, packageVersion) {
+function buildLockContent(
+  config: AiToolInitConfig,
+  resolvedConfig: ResolvedAiToolInitConfig,
+  managedEntries: DesiredEntry[],
+  packageVersion: string
+): AiToolInitLock {
   return {
     version: 1,
     tool: {
@@ -226,8 +261,20 @@ function buildLockContent(config, resolvedConfig, managedEntries, packageVersion
       providers: resolvedConfig.layers.team.providers.map(provider => ({
         id: provider.id,
         resolvedSourceRoot: provider.resolvedSourceRoot,
-        skills: provider.skills,
-        materializationMode: provider.materializationMode
+        skills: provider.selectedSkills.map(skill => skill.skillId),
+        materializationMode: provider.materializationMode,
+        packages: provider.packages.map(pkg => ({
+          id: pkg.id,
+          label: pkg.label,
+          priority: pkg.priority,
+          resolvedRoot: pkg.resolvedRoot,
+          fingerprint: pkg.fingerprint,
+          skills: pkg.skills.map(skill => ({
+            skillId: skill.skillId,
+            sourcePackageId: skill.sourcePackageId,
+            contentFingerprint: skill.contentFingerprint
+          }))
+        }))
       }))
     },
     managed: managedEntries.map(entry => ({
@@ -239,11 +286,15 @@ function buildLockContent(config, resolvedConfig, managedEntries, packageVersion
   };
 }
 
-function createOperations(projectRoot, desiredEntries, existingLock, options = {}) {
-  const operations = [];
+function createOperations(
+  projectRoot: string,
+  desiredEntries: DesiredEntry[],
+  existingLock: AiToolInitLock | null
+): InstallPlanOperation[] {
+  const operations: InstallPlanOperation[] = [];
   const desiredManagedEntries = desiredEntries.filter(entry => entry.managed);
   const desiredManagedPaths = new Set(desiredManagedEntries.map(entry => entry.path));
-  const previousManagedEntries = existingLock ? existingLock.managed || [] : [];
+  const previousManagedEntries = existingLock?.managed ?? [];
 
   for (const previousEntry of previousManagedEntries) {
     if (!desiredManagedPaths.has(previousEntry.path)) {
@@ -285,18 +336,77 @@ function createOperations(projectRoot, desiredEntries, existingLock, options = {
   return operations;
 }
 
-function createPlan({ command, projectRoot, profileId = 'default' }) {
+function computePackageDriftWarnings(
+  resolvedConfig: ResolvedAiToolInitConfig,
+  existingLock: AiToolInitLock | null
+): string[] {
+  if (!existingLock) {
+    return [];
+  }
+
+  const previousPackages = new Map<string, string>(
+    existingLock.resolved.providers.flatMap(provider =>
+      provider.packages.map(pkg => [`${provider.id}:${pkg.id}`, pkg.fingerprint] as const)
+    )
+  );
+  const warnings: string[] = [];
+
+  for (const provider of resolvedConfig.layers.team.providers) {
+    for (const pkg of provider.packages) {
+      const key = `${provider.id}:${pkg.id}`;
+      const previousFingerprint = previousPackages.get(key);
+      if (previousFingerprint && previousFingerprint !== pkg.fingerprint) {
+        warnings.push(`Provider package changed: ${provider.id}/${pkg.label}`);
+      }
+    }
+  }
+
+  return warnings;
+}
+
+export function createPlan({
+  command,
+  projectRoot,
+  intakePath,
+  providerRoots,
+  profileId = 'default'
+}: {
+  command: InstallCommand;
+  projectRoot: string;
+  profileId?: string | undefined;
+  intakePath?: string | undefined;
+  providerRoots?: Record<string, string> | undefined;
+}): InstallPlan {
   const targetProjectRoot = path.resolve(projectRoot);
-  const packageJson = require(path.join(__dirname, '..', 'package.json'));
+  const packageJson = readJson<PackageMetadata>(fileURLToPath(new URL('../package.json', import.meta.url)));
+  const intake = readIntakeIfPresent(intakePath);
+  if (intake?.targetProjectPath && intake.targetProjectPath !== targetProjectRoot) {
+    throw new Error(
+      `Intake targetProjectPath does not match --project: ${intake.targetProjectPath} !== ${targetProjectRoot}`
+    );
+  }
   const existingConfig = loadExistingConfig(targetProjectRoot);
   const existingLock = loadExistingLock(targetProjectRoot);
-  const bootstrapped = existingConfig ? null : createBootstrapConfig(targetProjectRoot, profileId);
-  const config = normalizeConfig(existingConfig || bootstrapped.config);
+  const bootstrapProfileId = resolveBootstrapProfileId(profileId, intake);
+  const effectiveCommand = resolveRequestedOperation(command, targetProjectRoot, intake);
+  const bootstrapped = existingConfig ? null : createBootstrapConfig(targetProjectRoot, bootstrapProfileId);
+  const config = normalizeConfig(
+    applyAgentInputsToConfig(normalizeConfig(existingConfig || bootstrapped!.config), intake, providerRoots)
+  );
   const resolvedConfig = resolveConfig(config);
   const desiredEntries = createDesiredEntries(targetProjectRoot, config, resolvedConfig);
+  const context = createEffectiveRunContext({
+    config,
+    detected: bootstrapped ? bootstrapped.detected : null,
+    existingConfig,
+    existingLock,
+    intake,
+    projectRoot: targetProjectRoot
+  });
 
-  const configWriteRequired = !existingConfig;
   const configContent = `${JSON.stringify(config, null, 2)}\n`;
+  const existingConfigContent = existingConfig ? `${JSON.stringify(existingConfig, null, 2)}\n` : null;
+  const configWriteRequired = existingConfigContent !== configContent;
   const managedEntries = desiredEntries.filter(entry => entry.managed);
   const lockContent = buildLockContent(config, resolvedConfig, managedEntries, packageJson.version);
   const lockEntry = createFileEntry(LOCK_RELATIVE_PATH, `${JSON.stringify(lockContent, null, 2)}\n`, {
@@ -310,24 +420,25 @@ function createPlan({ command, projectRoot, profileId = 'default' }) {
     managed: false
   });
 
-  const entriesWithState = [
-    ...(configWriteRequired ? [configEntry] : []),
-    ...desiredEntries,
-    lockEntry
-  ];
+  const entriesWithState = [...(configWriteRequired ? [configEntry] : []), ...desiredEntries, lockEntry];
 
-  const operations = createOperations(targetProjectRoot, entriesWithState, existingLock, { command });
+  const operations = createOperations(targetProjectRoot, entriesWithState, existingLock);
   const collisions = config.layers.project.skills
     .map(skill => skill.id)
-    .filter(skillId =>
-      resolvedConfig.layers.team.providers.some(provider => provider.skills.includes(skillId))
-    );
+    .filter(skillId => resolvedConfig.layers.team.providers.some(provider => provider.selectedSkills.some(item => item.skillId === skillId)));
+  const resolvedPackageCount = resolvedConfig.layers.team.providers.reduce((total, provider) => total + provider.packages.length, 0);
+  const selectedSkillSources = Object.fromEntries(
+    resolvedConfig.layers.team.providers.flatMap(provider =>
+      provider.selectedSkills.map(skill => [skill.skillId, `${provider.id}:${skill.sourcePackageId}`] as const)
+    )
+  );
+  const packageDriftWarnings = computePackageDriftWarnings(resolvedConfig, existingLock);
 
   return {
-    command,
+    command: effectiveCommand,
     config,
     desiredEntries: entriesWithState,
-    detected: bootstrapped ? bootstrapped.detected : null,
+    detected: context.detected,
     existingConfig: Boolean(existingConfig),
     existingLock,
     lockContent,
@@ -338,22 +449,38 @@ function createPlan({ command, projectRoot, profileId = 'default' }) {
       collisions,
       managedPathCount: managedEntries.length,
       operationCount: operations.length,
-      profile: config.profile
+      packageDriftWarnings,
+      profile: config.profile,
+      resolvedPackageCount,
+      selectedSkillSources
     }
   };
 }
 
-function explainPlan(plan) {
-  const lines = [];
-  lines.push(`Command: ${plan.command}`);
-  lines.push(`Project: ${plan.projectRoot}`);
-  lines.push(`Profile: ${plan.summary.profile}`);
-  lines.push(`Operations: ${plan.summary.operationCount}`);
-  lines.push(`Managed paths: ${plan.summary.managedPathCount}`);
+export function explainPlan(plan: InstallPlan): string {
+  const lines = [
+    `Command: ${plan.command}`,
+    `Project: ${plan.projectRoot}`,
+    `Profile: ${plan.summary.profile}`,
+    `Resolved packages: ${plan.summary.resolvedPackageCount}`,
+    `Operations: ${plan.summary.operationCount}`,
+    `Managed paths: ${plan.summary.managedPathCount}`
+  ];
   if (plan.summary.collisions.length > 0) {
     lines.push(`Project overrides team skills: ${plan.summary.collisions.join(', ')}`);
   }
+  if (Object.keys(plan.summary.selectedSkillSources).length > 0) {
+    lines.push(
+      `Selected skill sources: ${Object.entries(plan.summary.selectedSkillSources)
+        .map(([skillId, source]) => `${skillId}<- ${source}`)
+        .join(', ')}`
+    );
+  }
+  if (plan.summary.packageDriftWarnings.length > 0) {
+    lines.push(`Package warnings: ${plan.summary.packageDriftWarnings.join('; ')}`);
+  }
   lines.push('');
+
   for (const operation of plan.operations) {
     if (operation.action === 'delete') {
       lines.push(`- delete ${operation.path}`);
@@ -363,10 +490,6 @@ function explainPlan(plan) {
       lines.push(`- write-symlink ${operation.path}`);
     }
   }
+
   return lines.join('\n');
 }
-
-module.exports = {
-  createPlan,
-  explainPlan
-};

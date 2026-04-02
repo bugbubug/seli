@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "targetProjectPath": "/absolute/path/to/target-project",
+  "requestedOperation": "auto",
+  "profile": "default",
+  "providerRoots": {
+    "ecc": "/absolute/path/to/everything-claude-code"
+  },
+  "documents": [],
+  "requestedTeamSkills": [],
+  "requestedProjectSkills": [],
+  "projectSkillBlueprints": [],
+  "extraAgents": [
+    "explorer",
+    "reviewer"
+  ],
+  "compatPlugin": true,
+  "agentDecisions": [],
+  "notes": [
+    "Replace this template with run-specific intake data before executing ai-tool-init."
+  ]
+}

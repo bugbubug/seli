@@ -1,0 +1,87 @@
+{
+  "providerId": "ecc",
+  "fallbackSkills": [
+    "tdd-workflow",
+    "verification-loop",
+    "coding-standards"
+  ],
+  "rules": [
+    {
+      "skillId": "tdd-workflow",
+      "summary": "Use when the project requires implementation discipline, failing tests first, or explicit red-green-refactor loops.",
+      "keywords": ["tdd", "test-driven", "red green", "unit test", "integration test", "acceptance test"],
+      "documentKinds": ["requirements", "workflow"],
+      "appliesTo": ["project"]
+    },
+    {
+      "skillId": "verification-loop",
+      "summary": "Use when delivery requires staged verification, smoke checks, release validation, or acceptance gates.",
+      "keywords": ["verify", "verification", "smoke test", "acceptance", "validate", "release check", "quality gate"],
+      "documentKinds": ["requirements", "workflow"],
+      "appliesTo": ["project"]
+    },
+    {
+      "skillId": "coding-standards",
+      "summary": "Use when the docs define coding conventions, code quality constraints, or architecture guardrails.",
+      "keywords": ["coding standard", "lint", "format", "convention", "code style", "quality standard", "best practice"],
+      "documentKinds": ["requirements", "architecture", "workflow"],
+      "appliesTo": ["project", "team"]
+    },
+    {
+      "skillId": "backend-patterns",
+      "summary": "Use for backend services, APIs, workers, queues, server-side business logic, or service orchestration.",
+      "keywords": ["backend", "service", "api server", "worker", "queue", "job", "cron", "microservice"],
+      "documentKinds": ["requirements", "architecture"],
+      "appliesTo": ["project"]
+    },
+    {
+      "skillId": "security-review",
+      "summary": "Use when the docs mention auth, secrets, permissions, compliance, privacy, or risk-sensitive workflows.",
+      "keywords": ["security", "auth", "authentication", "authorization", "permission", "secret", "compliance", "privacy", "risk"],
+      "documentKinds": ["requirements", "architecture"],
+      "appliesTo": ["project", "system"]
+    },
+    {
+      "skillId": "api-design",
+      "summary": "Use when the project needs contracts, schemas, endpoints, third-party integrations, or interface definitions.",
+      "keywords": ["api", "endpoint", "schema", "openapi", "contract", "integration", "webhook", "rpc", "interface"],
+      "documentKinds": ["requirements", "architecture"],
+      "appliesTo": ["project"]
+    },
+    {
+      "skillId": "documentation-lookup",
+      "summary": "Use when the work depends on reading vendor docs, standards, or uploaded references during implementation.",
+      "keywords": ["documentation", "docs", "reference", "spec", "manual", "guide", "sdk", "library"],
+      "documentKinds": ["requirements", "architecture", "workflow", "misc"],
+      "appliesTo": ["team", "project"]
+    },
+    {
+      "skillId": "frontend-patterns",
+      "summary": "Use for web apps, dashboards, components, responsive layouts, or browser-side interactions.",
+      "keywords": ["frontend", "ui", "ux", "component", "react", "page", "dashboard", "responsive", "browser"],
+      "documentKinds": ["requirements", "architecture"],
+      "appliesTo": ["project"]
+    },
+    {
+      "skillId": "python-patterns",
+      "summary": "Use when the project uses Python services, scripts, automation, data flows, or Python libraries.",
+      "keywords": ["python", "fastapi", "django", "flask", "script", "automation", "pandas", "celery"],
+      "documentKinds": ["requirements", "architecture", "workflow"],
+      "appliesTo": ["project"]
+    },
+    {
+      "skillId": "python-testing",
+      "summary": "Use when Python delivery requires pytest, fixtures, async test setup, or Python-specific test guidance.",
+      "keywords": ["pytest", "python test", "fixture", "mock", "tox", "coverage", "async test"],
+      "documentKinds": ["requirements", "workflow"],
+      "appliesTo": ["project"]
+    },
+    {
+      "skillId": "database-migrations",
+      "summary": "Use when schemas, migrations, data backfills, relational changes, or persistence safety are involved.",
+      "keywords": ["database", "migration", "schema", "sql", "postgres", "mysql", "backfill", "table", "index"],
+      "documentKinds": ["requirements", "architecture", "workflow"],
+      "appliesTo": ["project"]
+    }
+  ]
+}

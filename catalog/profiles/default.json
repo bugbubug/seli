@@ -45,6 +45,16 @@
             "id": "change-closeout",
             "description": "Generic repo-local closeout checklist and reporting template.",
             "managed": true
+          },
+          {
+            "id": "team-skill-evolution",
+            "description": "Expand and refresh team skill coverage as the project matures.",
+            "managed": true
+          },
+          {
+            "id": "team-skill-sync",
+            "description": "Keep mounted team skills aligned with external package updates and replacements.",
+            "managed": true
           }
         ],
         "compatPlugin": {
