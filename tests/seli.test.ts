@@ -105,6 +105,19 @@ test('init writes only .selirc/.seli.lock and no compat outputs', () => {
   const skillTeam = fs.readFileSync(path.join(projectRoot, '.agents', 'skill_team.md'), 'utf8');
   expect(skillTeam).toContain('## system_prompt');
   expect(skillTeam).toContain('本项目由 Seli 初始化，请参考本地技能包进行代码生成。');
+
+  const agentsContract = fs.readFileSync(path.join(projectRoot, 'AGENTS.md'), 'utf8');
+  expect(agentsContract).toContain('## Agent First-Question Protocol');
+  expect(agentsContract).toContain('Required response format:');
+  expect(agentsContract).toContain('Language behavior (Chinese and English only):');
+  expect(agentsContract).toContain('If the user asks in Chinese, answer in Chinese.');
+  expect(agentsContract).toContain('If the user asks in English, answer in English.');
+  expect(agentsContract).toContain('1. `项目特点`');
+  expect(agentsContract).toContain('2. `你只需要提供`');
+  expect(agentsContract).toContain('3. `我会帮你做`');
+  expect(agentsContract).toContain('Target project absolute path.');
+  expect(agentsContract).toContain('Your team skill package root path');
+  expect(agentsContract).toContain('plan -> init/update -> doctor');
 });
 
 test('plan -> update remains idempotent', () => {
@@ -255,7 +268,9 @@ test('CLI explain mode prints Seli banner and init status lines', () => {
 
   expect(initOut).toContain('[Seli] 🦭 Searching for local skills (Flink, Spark, StarRocks...)...');
   expect(initOut).toContain('[Seli] ✨ Sealing the configuration for your agent...');
-  expect(initOut).toContain("[Seli] ✅ Project initialized. Now ask Claude or Codex to 'read Seli context'.");
+  expect(initOut).toContain(
+    '[Seli] ✅ Project initialized. Ask Claude or Codex: "这是什么项目？我需要提供什么才能帮我配置开发环境？"'
+  );
 });
 
 test('CLI json mode remains pure json without banner or status lines', () => {

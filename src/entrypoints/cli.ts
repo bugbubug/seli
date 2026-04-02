@@ -66,7 +66,9 @@ function main(): void {
 
     process.stdout.write(`${formatExplain(commandId, result)}\n`);
     if (commandId === 'init') {
-      process.stdout.write("[Seli] ✅ Project initialized. Now ask Claude or Codex to 'read Seli context'.\n");
+      process.stdout.write(
+        '[Seli] ✅ Project initialized. Ask Claude or Codex: "这是什么项目？我需要提供什么才能帮我配置开发环境？"\n'
+      );
     }
 
     if (commandId === 'doctor') {

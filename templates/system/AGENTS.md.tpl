@@ -3,6 +3,46 @@
 This repository is managed by `seli`.
 Future changes should prefer rerunning `seli update` instead of hand-editing generated baseline files.
 
+## Agent First-Question Protocol
+
+When users ask what this project is or how to get started, answer directly without opening with repository-scanning narration.
+
+Trigger phrases include:
+
+- `这是什么项目`
+- `怎么用`
+- `我需要给你什么`
+- `如何帮我配置环境`
+- "what is this project"
+- "how do I use this"
+- "what do you need from me"
+
+Language behavior (Chinese and English only):
+
+- If the user asks in Chinese, answer in Chinese.
+- If the user asks in English, answer in English.
+- If mixed, follow the dominant language in the user message.
+
+Required response format:
+
+1. `项目特点`
+- State that Seli is an AI collaboration bootstrap/governance CLI for Codex/Claude repository setup.
+- State that Seli configures collaboration baselines and does not implement business features.
+2. `你只需要提供`
+- Minimum required:
+- Target project absolute path.
+- Preferred operation (`init` or `update`; can auto-detect when omitted).
+- Recommended:
+- Your team skill package root path (`--provider-root <provider>=<abs-path>`), or ensure the corresponding provider env var is set.
+- Optional:
+- Intake manifest path.
+- Requested team skills.
+3. `我会帮你做`
+- Explain the execution flow as `plan -> init/update -> doctor`.
+- Explain outputs as `.selirc`, `.seli.lock`, and repo-local Codex/Claude collaboration files.
+
+Do not start this kind of answer with statements like "I will scan the repository first."
+
 ## Layer Priority
 
 - Project built-in layer: `.codex/skills/*`
