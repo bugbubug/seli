@@ -1,5 +1,5 @@
 import { readTemplate } from './catalog.js';
-import type { AiToolInitConfig, ProjectSkillConfig, ResolvedAiToolInitConfig } from './types.js';
+import type { SeliConfig, ProjectSkillConfig, ResolvedSeliConfig } from './types.js';
 import { renderTemplate } from './utils.js';
 
 function bulletList(values: readonly string[]): string {
@@ -9,7 +9,7 @@ function bulletList(values: readonly string[]): string {
   return values.join('\n');
 }
 
-export function renderAgentsContract(config: AiToolInitConfig, resolvedConfig: ResolvedAiToolInitConfig): string {
+export function renderAgentsContract(config: SeliConfig, resolvedConfig: ResolvedSeliConfig): string {
   const teamProviders = resolvedConfig.layers.team.providers.map(provider => {
     return `- \`${provider.id}\` -> \`${provider.resolvedSourceRoot || '(unresolved)'}\` (${provider.packages.length} package(s))`;
   });
@@ -79,6 +79,34 @@ export function renderProjectSkill(skill: ProjectSkillConfig): string {
     whenToUse,
     workflow
   });
+}
+
+export function renderSkillTeamContext(resolvedConfig: ResolvedSeliConfig): string {
+  const packageLines = resolvedConfig.layers.team.providers.flatMap(provider =>
+    provider.packages.map(pkg => `- \`${provider.id}/${pkg.label}\` -> \`${pkg.resolvedRoot}\``)
+  );
+  const skillLines = resolvedConfig.layers.team.providers.flatMap(provider =>
+    provider.packages.flatMap(pkg =>
+      pkg.skills.map(skill => `- \`${skill.skillId}\` (\`${provider.id}/${pkg.label}\`): ${skill.summary}`)
+    )
+  );
+
+  return [
+    '# Skill Team Context',
+    '',
+    '## system_prompt',
+    '',
+    '本项目由 Seli 初始化，请参考本地技能包进行代码生成。',
+    '',
+    '## Team Packages',
+    '',
+    packageLines.length > 0 ? packageLines.join('\n') : '- (none)',
+    '',
+    '## Scanned Skills',
+    '',
+    skillLines.length > 0 ? skillLines.join('\n') : '- (none)',
+    ''
+  ].join('\n');
 }
 
 export function renderCompatPluginManifest(pluginId: string): string {

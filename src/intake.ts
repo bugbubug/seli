@@ -7,7 +7,7 @@ import type {
   AgentIntakeDocument,
   AgentIntakeManifest,
   AgentDecisionRecord,
-  AiToolInitConfig,
+  SeliConfig,
   EffectiveRunContext,
   InstallCommand,
   ProjectSkillConfig,
@@ -118,10 +118,10 @@ function createManagedProjectSkill(skillId: string, existingSkill?: ProjectSkill
 }
 
 export function applyAgentInputsToConfig(
-  baseConfig: AiToolInitConfig,
+  baseConfig: SeliConfig,
   intake: AgentIntakeManifest | null,
   providerRoots: ProviderRootMap = {}
-): AiToolInitConfig {
+): SeliConfig {
   const config = deepClone(baseConfig);
 
   if (intake?.profile) {

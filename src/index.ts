@@ -1,57 +1,63 @@
-import { executePlan } from './apply.js';
-import { explainDoctor, runDoctor } from './doctor.js';
-import { createPlan, explainPlan } from './plan.js';
+import { createRuntimeEnvironment } from './application/create-runtime.js';
+import { runDoctorV2, explainDoctorV2 } from './application/doctor.js';
+import { executePlanV2 } from './application/executor.js';
+import { explainMigration, migrateProjectToV2 } from './application/migrate.js';
+import { createPlanV2, explainPlanV2 } from './application/planner.js';
+import type { InitOrUpdateResultV2, ProjectCommandOptionsV2 } from './domain/contracts.js';
 
-import type { InitOrUpdateResult, ProjectCommandOptions } from './types.js';
-
-export function planProject(options: ProjectCommandOptions) {
-  return createPlan({
-    command: 'plan',
-    ...options
-  });
+function withDefaults(options: ProjectCommandOptionsV2): ProjectCommandOptionsV2 {
+  return {
+    ...options,
+    profileId: options.profileId || 'default',
+    providerRoots: options.providerRoots || {}
+  };
 }
 
-export function initProject(options: ProjectCommandOptions): InitOrUpdateResult {
-  const plan = createPlan({
-    command: 'init',
-    ...options
-  });
-  const result = executePlan(plan, options);
+export function planProject(options: ProjectCommandOptionsV2) {
+  const env = createRuntimeEnvironment();
+  return createPlanV2('plan', withDefaults(options), env);
+}
+
+export function initProject(options: ProjectCommandOptionsV2): InitOrUpdateResultV2 {
+  const env = createRuntimeEnvironment();
+  const plan = createPlanV2('init', withDefaults(options), env);
+  const result = executePlanV2(plan, env, { force: options.force });
   return { plan, result };
 }
 
-export function updateProject(options: ProjectCommandOptions): InitOrUpdateResult {
-  const plan = createPlan({
-    command: 'update',
-    ...options
-  });
-  const result = executePlan(plan, options);
+export function updateProject(options: ProjectCommandOptionsV2): InitOrUpdateResultV2 {
+  const env = createRuntimeEnvironment();
+  const plan = createPlanV2('update', withDefaults(options), env);
+  const result = executePlanV2(plan, env, { force: options.force });
   return { plan, result };
 }
 
-export { createPlan, executePlan, explainDoctor, explainPlan, runDoctor };
+export function runDoctor(options: ProjectCommandOptionsV2) {
+  const env = createRuntimeEnvironment();
+  return runDoctorV2(withDefaults(options), env);
+}
+
+export function migrateProject(options: ProjectCommandOptionsV2) {
+  const env = createRuntimeEnvironment();
+  return migrateProjectToV2(withDefaults(options), env);
+}
+
+export const explainPlan = explainPlanV2;
+export const explainDoctor = explainDoctorV2;
+export const explainMigrationResult = explainMigration;
+
 export type {
-  AgentDecisionRecord,
-  AgentIntakeDocument,
-  AgentIntakeManifest,
-  AiToolInitConfig,
-  AiToolInitLock,
-  CliOptions,
-  DoctorError,
-  DoctorResult,
-  EffectiveRunContext,
-  InstallPlan,
+  AgentIntakeManifestV2,
+  SeliConfigV2,
+  SeliLockV2,
+  CliOutputMode,
+  DoctorResultV2,
+  InitOrUpdateResultV2,
+  InstallPlanV2,
   InstallPlanOperation,
-  LayerConfig,
-  ProjectSkillBlueprint,
-  ProviderRootMap,
-  ProjectSkillConfig,
-  ResolvedProviderConfig,
-  ResolvedTeamSkillPackage,
+  ParsedCliOptionsV2,
+  ProjectCommandOptionsV2,
   RequestedOperation,
-  TeamSkillPolicyCatalog,
-  TeamSkillPolicyRule,
-  TeamSkillPackageConfig,
-  TeamSkillPackageInput,
-  TeamProviderConfig
-} from './types.js';
+  TeamProviderConfigV2,
+  TeamSkillPolicyCatalog
+} from './domain/contracts.js';

@@ -30,7 +30,27 @@
     {
       "skillId": "backend-patterns",
       "summary": "Use for backend services, APIs, workers, queues, server-side business logic, or service orchestration.",
-      "keywords": ["backend", "service", "api server", "worker", "queue", "job", "cron", "microservice"],
+      "keywords": [
+        "backend",
+        "service",
+        "api server",
+        "worker",
+        "queue",
+        "job",
+        "cron",
+        "microservice",
+        "nodejs",
+        "node.js",
+        "express",
+        "nestjs",
+        "koa",
+        "hono",
+        "fastify",
+        "spring boot",
+        "django",
+        "rails",
+        "laravel"
+      ],
       "documentKinds": ["requirements", "architecture"],
       "appliesTo": ["project"]
     },
@@ -44,7 +64,21 @@
     {
       "skillId": "api-design",
       "summary": "Use when the project needs contracts, schemas, endpoints, third-party integrations, or interface definitions.",
-      "keywords": ["api", "endpoint", "schema", "openapi", "contract", "integration", "webhook", "rpc", "interface"],
+      "keywords": [
+        "api",
+        "endpoint",
+        "schema",
+        "openapi",
+        "swagger",
+        "contract",
+        "integration",
+        "webhook",
+        "rpc",
+        "grpc",
+        "graphql",
+        "rest",
+        "interface"
+      ],
       "documentKinds": ["requirements", "architecture"],
       "appliesTo": ["project"]
     },
@@ -58,14 +92,42 @@
     {
       "skillId": "frontend-patterns",
       "summary": "Use for web apps, dashboards, components, responsive layouts, or browser-side interactions.",
-      "keywords": ["frontend", "ui", "ux", "component", "react", "page", "dashboard", "responsive", "browser"],
+      "keywords": [
+        "frontend",
+        "ui",
+        "ux",
+        "component",
+        "react",
+        "next.js",
+        "nextjs",
+        "vue",
+        "nuxt",
+        "svelte",
+        "angular",
+        "remix",
+        "page",
+        "dashboard",
+        "responsive",
+        "browser"
+      ],
       "documentKinds": ["requirements", "architecture"],
       "appliesTo": ["project"]
     },
     {
       "skillId": "python-patterns",
       "summary": "Use when the project uses Python services, scripts, automation, data flows, or Python libraries.",
-      "keywords": ["python", "fastapi", "django", "flask", "script", "automation", "pandas", "celery"],
+      "keywords": [
+        "python",
+        "fastapi",
+        "django",
+        "flask",
+        "script",
+        "automation",
+        "pandas",
+        "celery",
+        "poetry",
+        "uvicorn"
+      ],
       "documentKinds": ["requirements", "architecture", "workflow"],
       "appliesTo": ["project"]
     },
@@ -79,7 +141,23 @@
     {
       "skillId": "database-migrations",
       "summary": "Use when schemas, migrations, data backfills, relational changes, or persistence safety are involved.",
-      "keywords": ["database", "migration", "schema", "sql", "postgres", "mysql", "backfill", "table", "index"],
+      "keywords": [
+        "database",
+        "migration",
+        "schema",
+        "sql",
+        "postgres",
+        "postgresql",
+        "mysql",
+        "sqlite",
+        "prisma",
+        "drizzle",
+        "sequelize",
+        "typeorm",
+        "backfill",
+        "table",
+        "index"
+      ],
       "documentKinds": ["requirements", "architecture", "workflow"],
       "appliesTo": ["project"]
     }

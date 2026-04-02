@@ -5,15 +5,13 @@
     "defaultMode": "symlink"
   },
   "source": {
-    "envVar": "AI_TOOL_INIT_ECC_ROOT",
+    "envVar": "SELI_ECC_ROOT",
     "defaultCandidates": [
       "../everything-claude-code",
-      "../../everything-claude-code"
+      "../../everything-claude-code",
+      "../../../everything-claude-code"
     ],
     "skillsSubdir": "skills"
-  },
-  "compatPlugin": {
-    "enabledByDefault": true
   },
   "supportedPlatforms": [
     "codex",

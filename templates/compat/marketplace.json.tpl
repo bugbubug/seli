@@ -1,7 +1,7 @@
 {
-  "name": "ai-tool-init-local",
+  "name": "seli-local",
   "interface": {
-    "displayName": "AI Tool Init Local Plugins"
+    "displayName": "Seli Local Plugins"
   },
   "plugins": [
     {

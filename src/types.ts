@@ -146,7 +146,7 @@ export interface PolicyConfig {
   compat: CompatPolicy;
 }
 
-export interface AiToolInitConfig {
+export interface SeliConfig {
   version: 1;
   profile: string;
   platforms: {
@@ -157,7 +157,7 @@ export interface AiToolInitConfig {
   policies: PolicyConfig;
 }
 
-export interface ResolvedAiToolInitConfig extends Omit<AiToolInitConfig, 'layers'> {
+export interface ResolvedSeliConfig extends Omit<SeliConfig, 'layers'> {
   layers: Omit<LayerConfig, 'team'> & {
     team: {
       providers: ResolvedProviderConfig[];
@@ -175,9 +175,6 @@ export interface ProviderCatalog {
     envVar?: string;
     defaultCandidates?: string[];
     skillsSubdir: string;
-  };
-  compatPlugin: {
-    enabledByDefault: boolean;
   };
   supportedPlatforms: string[];
   allowedSkills: string[];
@@ -199,7 +196,7 @@ export interface TeamSkillPolicyCatalog {
 
 export interface ProfileCatalog {
   id: string;
-  config: AiToolInitConfig;
+  config: SeliConfig;
 }
 
 export interface SystemCatalog {
@@ -219,7 +216,7 @@ export interface DetectedLegacyState {
 }
 
 export interface LockToolMetadata {
-  name: 'ai-tool-init';
+  name: 'seli';
   version: string;
 }
 
@@ -260,7 +257,7 @@ export type ManagedEntry = {
   path: string;
 } & ManagedFingerprint;
 
-export interface AiToolInitLock {
+export interface SeliLock {
   version: 1;
   tool: LockToolMetadata;
   profile: string;
@@ -330,12 +327,12 @@ export interface InstallPlanSummary {
 
 export interface InstallPlan {
   command: InstallCommand;
-  config: AiToolInitConfig;
+  config: SeliConfig;
   desiredEntries: DesiredEntry[];
   detected: DetectedLegacyState | null;
   existingConfig: boolean;
-  existingLock: AiToolInitLock | null;
-  lockContent: AiToolInitLock;
+  existingLock: SeliLock | null;
+  lockContent: SeliLock;
   managedEntries: DesiredEntry[];
   operations: InstallPlanOperation[];
   projectRoot: string;
@@ -388,10 +385,10 @@ export interface InitOrUpdateResult {
 }
 
 export interface EffectiveRunContext {
-  config: AiToolInitConfig;
+  config: SeliConfig;
   detected: DetectedLegacyState | null;
-  existingConfig: AiToolInitConfig | null;
-  existingLock: AiToolInitLock | null;
+  existingConfig: SeliConfig | null;
+  existingLock: SeliLock | null;
   intake: AgentIntakeManifest | null;
   projectRoot: string;
   requestedOperation: RequestedOperation | null;

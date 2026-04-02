@@ -9,5 +9,5 @@ Recommended examples:
 - workflow docs
 - team skill indexes
 
-After copying documents here, record them in `../manifest.json` before running `ai-tool-init`.
+After copying documents here, record them in `../manifest.json` before running `seli`.
 Create it from `../manifest.template.json` when needed.

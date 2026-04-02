@@ -58,8 +58,8 @@
           }
         ],
         "compatPlugin": {
-          "enabled": true,
-          "pluginId": "ai-tool-init-compat"
+          "enabled": false,
+          "pluginId": "disabled"
         },
         "extraAgents": [
           "explorer",

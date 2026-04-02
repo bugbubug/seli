@@ -17,6 +17,8 @@
   "compatPlugin": true,
   "agentDecisions": [],
   "notes": [
-    "Copy this file to intake/manifest.json and replace with run-specific intake data before execution."
+    "Copy this file to intake/manifest.json and replace with run-specific intake data before execution.",
+    "For stack guidance, persist final stack rationale using stack-* naming in decision summaries (migrated to v2 decisions ids) and capture constraints in notes.",
+    "For Git guidance, persist workflow rationale using git-* naming in decision summaries (migrated to v2 decisions ids) and capture branch/CI/release constraints in notes."
   ]
 }

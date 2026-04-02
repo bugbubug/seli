@@ -18,10 +18,17 @@ import {
   resolveBootstrapProfileId,
   resolveRequestedOperation
 } from './intake.js';
-import { renderAgentsContract, renderCompatMarketplace, renderCompatPluginManifest, renderCompatPluginReadme, renderProjectSkill } from './render.js';
+import {
+  renderAgentsContract,
+  renderCompatMarketplace,
+  renderCompatPluginManifest,
+  renderCompatPluginReadme,
+  renderProjectSkill,
+  renderSkillTeamContext
+} from './render.js';
 import type {
-  AiToolInitConfig,
-  AiToolInitLock,
+  SeliConfig,
+  SeliLock,
   DesiredEntry,
   DesiredFileEntry,
   DesiredSymlinkEntry,
@@ -29,7 +36,7 @@ import type {
   InstallPlan,
   InstallPlanOperation,
   PackageMetadata,
-  ResolvedAiToolInitConfig
+  ResolvedSeliConfig
 } from './types.js';
 import { getFileContentIfExists, getManagedFingerprint, getSymlinkTargetIfExists, readJson, stableSortEntries } from './utils.js';
 
@@ -55,7 +62,7 @@ function createSymlinkEntry(
   };
 }
 
-function maybeRelativeTarget(projectRoot: string, entryPath: string, targetPath: string, policy: AiToolInitConfig['policies']['symlink']): string {
+function maybeRelativeTarget(projectRoot: string, entryPath: string, targetPath: string, policy: SeliConfig['policies']['symlink']): string {
   if (policy !== 'relative') {
     return targetPath;
   }
@@ -65,8 +72,8 @@ function maybeRelativeTarget(projectRoot: string, entryPath: string, targetPath:
 
 function createDesiredEntries(
   projectRoot: string,
-  config: AiToolInitConfig,
-  resolvedConfig: ResolvedAiToolInitConfig
+  config: SeliConfig,
+  resolvedConfig: ResolvedSeliConfig
 ): DesiredEntry[] {
   const entries: DesiredEntry[] = [];
   const projectSkillSourceRoot = path.join(projectRoot, '.codex', 'skills');
@@ -181,6 +188,13 @@ function createDesiredEntries(
       managed: true
     })
   );
+  entries.push(
+    createFileEntry('.agents/skill_team.md', renderSkillTeamContext(resolvedConfig), {
+      layer: 'team',
+      owner: 'team-context',
+      managed: true
+    })
+  );
 
   for (const provider of resolvedConfig.layers.team.providers) {
     for (const skill of provider.selectedSkills) {
@@ -245,15 +259,15 @@ function createDesiredEntries(
 }
 
 function buildLockContent(
-  config: AiToolInitConfig,
-  resolvedConfig: ResolvedAiToolInitConfig,
+  config: SeliConfig,
+  resolvedConfig: ResolvedSeliConfig,
   managedEntries: DesiredEntry[],
   packageVersion: string
-): AiToolInitLock {
+): SeliLock {
   return {
     version: 1,
     tool: {
-      name: 'ai-tool-init',
+      name: 'seli',
       version: packageVersion
     },
     profile: config.profile,
@@ -289,7 +303,7 @@ function buildLockContent(
 function createOperations(
   projectRoot: string,
   desiredEntries: DesiredEntry[],
-  existingLock: AiToolInitLock | null
+  existingLock: SeliLock | null
 ): InstallPlanOperation[] {
   const operations: InstallPlanOperation[] = [];
   const desiredManagedEntries = desiredEntries.filter(entry => entry.managed);
@@ -337,8 +351,8 @@ function createOperations(
 }
 
 function computePackageDriftWarnings(
-  resolvedConfig: ResolvedAiToolInitConfig,
-  existingLock: AiToolInitLock | null
+  resolvedConfig: ResolvedSeliConfig,
+  existingLock: SeliLock | null
 ): string[] {
   if (!existingLock) {
     return [];

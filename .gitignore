@@ -12,8 +12,8 @@ intake/docs/*
 !intake/manifest.template.json
 
 # Generated state when this repository is used as the target project
-.ai-tool-init/
+.selirc
+.seli.lock
 .agents/
 .codex/
 .claude/
-plugins/ai-tool-init-compat/

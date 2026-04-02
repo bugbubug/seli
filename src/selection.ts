@@ -116,7 +116,7 @@ function createGenericBlueprint(
         : ['Review the current repository truth before implementing changes.'],
     guardrails: [
       'Prefer repository-specific guidance over team defaults when they conflict.',
-      'Keep repository truth in AGENTS.md and .ai-tool-init/config.json.'
+      'Keep repository truth in AGENTS.md and .selirc.'
     ],
     relatedTeamSkills,
     sourcePaths,

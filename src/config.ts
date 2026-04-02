@@ -4,17 +4,17 @@ import path from 'node:path';
 import { loadProfile, loadProvider, managerRoot } from './catalog.js';
 import { buildResolvedProvider, createTeamSkillPackageConfig } from './provider-packages.js';
 import type {
-  AiToolInitConfig,
-  AiToolInitLock,
+  SeliConfig,
+  SeliLock,
   DetectedLegacyState,
   ProjectSkillConfig,
-  ResolvedAiToolInitConfig,
+  ResolvedSeliConfig,
   TeamProviderConfig
 } from './types.js';
 import { deepClone, listSkillDirectories, maybeRealPath, readJson, uniqueStrings } from './utils.js';
 
-export const CONFIG_RELATIVE_PATH = '.ai-tool-init/config.json';
-export const LOCK_RELATIVE_PATH = '.ai-tool-init/lock.json';
+export const CONFIG_RELATIVE_PATH = '.selirc';
+export const LOCK_RELATIVE_PATH = '.seli.lock';
 
 export function configPathFor(projectRoot: string): string {
   return path.join(projectRoot, CONFIG_RELATIVE_PATH);
@@ -24,23 +24,23 @@ export function lockPathFor(projectRoot: string): string {
   return path.join(projectRoot, LOCK_RELATIVE_PATH);
 }
 
-export function loadExistingConfig(projectRoot: string): AiToolInitConfig | null {
+export function loadExistingConfig(projectRoot: string): SeliConfig | null {
   const filePath = configPathFor(projectRoot);
   if (!fs.existsSync(filePath)) {
     return null;
   }
-  return readJson<AiToolInitConfig>(filePath);
+  return readJson<SeliConfig>(filePath);
 }
 
-export function loadExistingLock(projectRoot: string): AiToolInitLock | null {
+export function loadExistingLock(projectRoot: string): SeliLock | null {
   const filePath = lockPathFor(projectRoot);
   if (!fs.existsSync(filePath)) {
     return null;
   }
-  return readJson<AiToolInitLock>(filePath);
+  return readJson<SeliLock>(filePath);
 }
 
-export function buildConfigFromProfile(profileId = 'default'): AiToolInitConfig {
+export function buildConfigFromProfile(profileId = 'default'): SeliConfig {
   const profile = loadProfile(profileId);
   return deepClone(profile.config);
 }
@@ -64,7 +64,7 @@ const REQUIRED_PROJECT_SKILLS: ProjectSkillConfig[] = [
       'Use when the project enters a new phase, adds new technical scope, or needs additional team skills beyond the initial bootstrap.'
     ],
     workflow: [
-      'Read AGENTS.md, .ai-tool-init/config.json, and .ai-tool-init/lock.json before choosing new team skills.',
+      'Read AGENTS.md, .selirc, and .seli.lock before choosing new team skills.',
       'Review the current repository structure, uploaded docs, and configured team skill packages to identify capability gaps.',
       'Prepare intake changes for the new team skill selection, then run plan, update, and doctor.'
     ],
@@ -81,13 +81,13 @@ const REQUIRED_PROJECT_SKILLS: ProjectSkillConfig[] = [
       'Use when team skill packages change on disk, new packages are introduced, or existing package contents have been updated.'
     ],
     workflow: [
-      'Compare the current package scan against .ai-tool-init/lock.json to find added, removed, or changed team skills.',
+      'Compare the current package scan against .seli.lock to find added, removed, or changed team skills.',
       'Adjust the selected team skills when a package change affects the project capability set.',
       'Run plan, update, and doctor to refresh symlinks, lock fingerprints, and validation state.'
     ],
     guardrails: [
       'Treat lock drift as a signal to rescan package contents before changing team skill selections.',
-      'Do not edit mounted team skills inside the project; update the source package or rerun ai-tool-init.'
+      'Do not edit mounted team skills inside the project; update the source package or rerun seli.'
     ]
   }
 ];
@@ -207,7 +207,7 @@ export function detectLegacyState(projectRoot: string): DetectedLegacyState {
 export function createBootstrapConfig(
   projectRoot: string,
   profileId = 'default'
-): { config: AiToolInitConfig; detected: DetectedLegacyState } {
+): { config: SeliConfig; detected: DetectedLegacyState } {
   const base = buildConfigFromProfile(profileId);
   const detected = detectLegacyState(projectRoot);
 
@@ -252,7 +252,7 @@ export function createBootstrapConfig(
   };
 }
 
-export function normalizeConfig(inputConfig: AiToolInitConfig): AiToolInitConfig {
+export function normalizeConfig(inputConfig: SeliConfig): SeliConfig {
   const config = deepClone(inputConfig);
   config.version = 1;
   config.profile = config.profile || 'default';
@@ -265,7 +265,7 @@ export function normalizeConfig(inputConfig: AiToolInitConfig): AiToolInitConfig
     team: { providers: [] },
     project: {
       skills: [],
-      compatPlugin: { enabled: false, pluginId: 'ai-tool-init-compat' },
+      compatPlugin: { enabled: false, pluginId: 'seli-compat' },
       extraAgents: ['explorer', 'reviewer']
     }
   };
@@ -310,7 +310,7 @@ export function normalizeConfig(inputConfig: AiToolInitConfig): AiToolInitConfig
 
   config.layers.project = config.layers.project || {
     skills: [],
-    compatPlugin: { enabled: false, pluginId: 'ai-tool-init-compat' },
+    compatPlugin: { enabled: false, pluginId: 'seli-compat' },
     extraAgents: ['explorer', 'reviewer']
   };
   config.layers.project.skills = (config.layers.project.skills || []).map(skill => ({
@@ -328,11 +328,11 @@ export function normalizeConfig(inputConfig: AiToolInitConfig): AiToolInitConfig
 
   const compatPlugin = config.layers.project.compatPlugin || {
     enabled: false,
-    pluginId: 'ai-tool-init-compat'
+    pluginId: 'seli-compat'
   };
   config.layers.project.compatPlugin = {
     enabled: compatPlugin.enabled,
-    pluginId: compatPlugin.pluginId || 'ai-tool-init-compat'
+    pluginId: compatPlugin.pluginId || 'seli-compat'
   };
   config.layers.project.extraAgents = uniqueStrings(config.layers.project.extraAgents || ['explorer', 'reviewer']);
 
@@ -350,7 +350,7 @@ export function normalizeConfig(inputConfig: AiToolInitConfig): AiToolInitConfig
   return config;
 }
 
-export function resolveConfig(config: AiToolInitConfig): ResolvedAiToolInitConfig {
+export function resolveConfig(config: SeliConfig): ResolvedSeliConfig {
   const resolved = deepClone(config);
   resolved.layers.team.providers = resolved.layers.team.providers.map(provider => {
     const fallbackSourceRoot = resolveProviderSourceRoot(provider);
@@ -358,6 +358,6 @@ export function resolveConfig(config: AiToolInitConfig): ResolvedAiToolInitConfi
       ...provider,
       sourceRoot: provider.sourceRoot || fallbackSourceRoot || undefined
     });
-  }) as ResolvedAiToolInitConfig['layers']['team']['providers'];
-  return resolved as ResolvedAiToolInitConfig;
+  }) as ResolvedSeliConfig['layers']['team']['providers'];
+  return resolved as ResolvedSeliConfig;
 }

@@ -68,7 +68,7 @@ export function executePlan(plan: InstallPlan, options: { force?: boolean | unde
     applyOperation(plan, operation);
   }
 
-  writeJson(path.join(plan.projectRoot, '.ai-tool-init', 'lock.json'), plan.lockContent);
+  writeJson(path.join(plan.projectRoot, '.seli.lock'), plan.lockContent);
 
   return {
     operations: plan.operations,

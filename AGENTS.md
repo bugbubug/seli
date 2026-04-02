@@ -1,93 +1,111 @@
-# ai-tool-init Agent Workflow
+# Repository Collaboration Contract
 
-This repository is agent-first. Treat this file as the primary entrypoint when the repository is opened in Codex or Claude Code.
+This repository is managed by `seli`.
+Future changes should prefer rerunning `seli update` instead of hand-editing generated baseline files.
 
-## Default Flow
+## Layer Priority
 
-1. Confirm the target project path.
-2. Confirm the requested operation:
-   - `init` for a new target project
-   - `update` for an existing target project
-   - `doctor` for validation only
-   - `auto` when the agent should decide between `init` and `update`
-3. Confirm the team provider root or the uploaded local team skill package paths. Current default provider is `ecc`.
-4. Check whether the user uploaded documents or provided local document paths.
-5. Scan the uploaded local team skill package paths and capture the available skills and summaries.
-6. Normalize those inputs into `intake/manifest.json`.
-7. Run `plan`.
-8. Run `init` or `update`.
-9. Run `doctor` and report the result.
+- Project built-in layer: `.codex/skills/*`
+- Claude native project-skill entrypoint: `.claude/skills/* -> .codex/skills/*`
+- Team layer: `.agents/skills/*`
+- System baseline layer: repo-local `.codex/*` and `.claude/*`
 
-## Required Inputs
+Effective priority:
 
-- Target project path
-- Operation intent or `auto`
-- Provider root for `ecc` or uploaded local team skill package paths when team skills are required
-- Uploaded docs or document paths when the target project needs custom skill, agent, or compat decisions
+- `.codex/skills/*` > `.agents/skills/*` > system baseline
 
-If one of these is missing, ask only for the missing value. Do not tell the user to read `README.md` before proceeding.
+## Source Of Truth
 
-## Intake Contract
+- Human-editable manifest: `.selirc`
+- Generated state lock: `.seli.lock`
+- Repo-local collaboration contract: `AGENTS.md`
+- Claude Code compatibility entrypoint: `CLAUDE.md -> AGENTS.md`
 
-Use `intake/manifest.json` as the structured handoff from agent reasoning to CLI execution.
+## Update Workflow
 
-- Put reusable documents under `intake/docs/`
-- Record document metadata in `documents`
-- Record team provider roots in `providerRoots`
-- Record uploaded package paths in `teamPackages`
-- Read `catalog/team-skill-policies/ecc.json` when choosing `ecc` team skills
-- Record selected team skills in `requestedTeamSkills` only when you want to override policy-based auto-selection
-- Record selected project skill ids in `requestedProjectSkills` for generic generated skills
-- Record `projectSkillBlueprints` when you want high-quality project-local skills generated from requirements and uploaded docs
-- Record selected extra agents in `extraAgents`
-- Record plugin compatibility intent in `compatPlugin`
-- Record document-derived conclusions in `agentDecisions`
+- Keep this repository managed through `seli`.
+- Before `plan`, read uploaded project docs and every user-provided local team skill package path.
+- Normalize uploaded team skill package paths into intake `teamPackages`.
+- Team provider package roots can persist in `.selirc`.
+- Runtime overrides can still come from `--provider-root <provider>=<abs-path>` or provider env vars.
+- When new documents or package changes affect skill or agent choices, record those decisions in intake and rerun `update`.
+- Project-local skills may be generated from intake blueprints and uploaded documents; update them through `seli` instead of editing their baseline structure manually.
 
-The CLI consumes structured intake only. Semantic interpretation of uploaded docs is the agent's responsibility.
+## Tech Stack Guidance
 
-## Team Skill Selection
+- For new or near-empty repositories, run stack guidance before implementation by default.
+- For existing repositories, do not interrupt with stack guidance unless the user explicitly asks for stack or framework changes.
+- If the user has no preferred stack, propose 2-3 viable options with explicit tradeoffs and wait for confirmation.
+- If the user already picked a stack, prioritize that choice and only suggest alternatives when hard constraints conflict.
+- Keep stack decision ownership with the user; do not force a stack.
+- Persist stack conclusions in intake:
+  - Use `decisions` ids with `stack-*` for the chosen stack and rationale.
+  - Use `notes` for constraints such as deployment environment, team familiarity, performance targets, and budget limits.
+- Keep future `update` runs consistent with the latest accepted stack decision unless the user requests a change.
 
-- For `ecc`, use `catalog/team-skill-policies/ecc.json` as the first selection reference.
-- Scan the uploaded package directories before `plan` so the agent knows which skills actually exist.
-- If `requestedTeamSkills` is omitted, `ai-tool-init` will score the uploaded docs, notes, and agent decisions against that policy and auto-select from the skills that are actually present in the scanned packages.
-- If the user explicitly asks for a different set, write `requestedTeamSkills` and treat that as authoritative.
+## Git Management Guidance
 
-## Project Skill Generation
+- After creating a new or near-empty project scaffold, guide Git setup by default.
+- For established repositories, do not enforce Git-process re-onboarding unless the user asks for workflow changes.
+- Guide baseline Git flow in order:
+  - repository initialization state and default branch decision
+  - initial baseline commit quality
+  - remote setup and first push (when remote details are available)
+  - branch-per-change and review-ready commit practices for ongoing work
+- Keep Git process ownership with the user; do not force provider-specific defaults.
+- Persist Git workflow conclusions in intake:
+  - Use `decisions` ids with `git-*` for chosen workflow and rationale.
+  - Use `notes` for constraints such as branch protections, CI gates, and release policies.
+- Keep future `update` runs aligned with the latest accepted Git workflow decisions unless the user requests a change.
 
-- Use `projectSkillBlueprints` when the uploaded docs justify repository-specific built-in skills.
-- A good blueprint includes:
-  - `id`
-  - `description`
-  - `whenToUse`
-  - `workflow`
-  - `guardrails`
-  - `relatedTeamSkills`
-  - `sourcePaths`
-  - `sourceDocumentLabels`
-- If only `requestedProjectSkills` is present, `ai-tool-init` will still generate a generic project skill from the current intake context.
+## Enabled Team Providers
 
-## Commands
+- `ecc` -> `/Users/bugbubug/Desktop/ai-project/everything-claude-code` (1 package(s))
 
-```bash
-bun run src/cli.ts plan --project /abs/path --intake intake/manifest.json --provider-root ecc=/abs/path
-bun run src/cli.ts init --project /abs/path --intake intake/manifest.json --provider-root ecc=/abs/path
-bun run src/cli.ts update --project /abs/path --intake intake/manifest.json --provider-root ecc=/abs/path
-bun run src/cli.ts doctor --project /abs/path --intake intake/manifest.json --provider-root ecc=/abs/path
-```
+## Resolved Team Packages
 
-## Resolution Rules
+- `ecc/everything-claude-code` -> `/Users/bugbubug/Desktop/ai-project/everything-claude-code`
 
-- Provider root precedence: `--provider-root` > intake `providerRoots` > target `.ai-tool-init/config.json` > env var > catalog defaults
-- If package paths come from intake, `init` and `update` persist them into the target project's `.ai-tool-init/config.json`
-- If the provider root comes from `--provider-root` or intake, `init` and `update` persist it into the target project's `.ai-tool-init/config.json`
-- `requestedOperation=auto` maps to:
-  - `init` for an empty or new target project
-  - `update` for a target project that already has repo-local state or `.ai-tool-init/config.json`
+## Enabled Team Skills
+
+- `tdd-workflow`
+- `verification-loop`
+- `coding-standards`
+
+## Team Skill Sources
+
+- `coding-standards` from `ecc/ecc-0-everything-claude-code`
+- `tdd-workflow` from `ecc/ecc-0-everything-claude-code`
+- `verification-loop` from `ecc/ecc-0-everything-claude-code`
+
+## Built-in Project Skills
+
+- `repo-governance`
+- `change-closeout`
+- `stack-bootstrap-guide`
+- `git-management-guide`
+- `team-skill-evolution`
+- `team-skill-sync`
+
+## Repo-local Entrypoints
+
+- `.codex/config.toml`
+- `.codex/agents/*.toml`
+- `.codex/skills/*`
+- `.claude/skills/*`
+- `.agents/skills/*`
+- `.agents/skill_team.md`
+- `.claude/README.md`
+- `.claude/rules/README.md`
+
+## Engineering Baseline
+
+- This management repository uses `TypeScript strict` and `Bun-only` workflows.
+- Generated guidance should recommend `Bun + TypeScript strict` as the default engineering baseline.
+- Prefer repo-local configuration over global user state.
 
 ## Guardrails
 
-- Only write inside the target project and this manager repository's intake workspace
-- Do not write `~/.codex` or `~/.claude`
-- Keep the three-layer model: `project > team > system`
-- Treat plugin and marketplace assets as compatibility only
-- When project and team skills overlap, prefer the project skill
+- Only write inside this repository.
+- Do not treat `~/.codex` or `~/.claude` as repository truth.
+- When project and team skills overlap, prefer the project skill.
