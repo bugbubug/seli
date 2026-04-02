@@ -1,0 +1,54 @@
+{
+  "id": "minimal",
+  "config": {
+    "version": 1,
+    "profile": "minimal",
+    "platforms": {
+      "codex": {
+        "enabled": true
+      },
+      "claude": {
+        "enabled": true
+      }
+    },
+    "layers": {
+      "system": {
+        "baselineVersion": "1.0.0",
+        "modules": [
+          "codex",
+          "claude"
+        ]
+      },
+      "team": {
+        "providers": [
+          {
+            "id": "ecc",
+            "materializationMode": "symlink",
+            "skills": [
+              "tdd-workflow",
+              "verification-loop",
+              "coding-standards"
+            ]
+          }
+        ]
+      },
+      "project": {
+        "skills": [],
+        "compatPlugin": {
+          "enabled": false,
+          "pluginId": "ai-tool-init-compat"
+        },
+        "extraAgents": [
+          "explorer",
+          "reviewer"
+        ]
+      }
+    },
+    "policies": {
+      "overwriteManagedFiles": false,
+      "drift": "error",
+      "symlink": "relative",
+      "compat": "minimal"
+    }
+  }
+}

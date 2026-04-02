@@ -1,0 +1,9 @@
+{
+  "id": "claude",
+  "description": "Repo-local Claude Code guidance entrypoints.",
+  "modules": [
+    "claude-readme",
+    "claude-rules-readme",
+    "claude-settings"
+  ]
+}

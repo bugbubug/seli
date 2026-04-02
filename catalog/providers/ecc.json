@@ -1,0 +1,35 @@
+{
+  "id": "ecc",
+  "description": "Everything Claude Code provider adapter.",
+  "materialization": {
+    "defaultMode": "symlink"
+  },
+  "source": {
+    "envVar": "AI_TOOL_INIT_ECC_ROOT",
+    "defaultCandidates": [
+      "../everything-claude-code",
+      "../../everything-claude-code"
+    ],
+    "skillsSubdir": "skills"
+  },
+  "compatPlugin": {
+    "enabledByDefault": true
+  },
+  "supportedPlatforms": [
+    "codex",
+    "claude"
+  ],
+  "allowedSkills": [
+    "tdd-workflow",
+    "verification-loop",
+    "coding-standards",
+    "backend-patterns",
+    "security-review",
+    "api-design",
+    "documentation-lookup",
+    "frontend-patterns",
+    "python-patterns",
+    "python-testing",
+    "database-migrations"
+  ]
+}

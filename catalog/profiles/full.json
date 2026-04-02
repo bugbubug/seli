@@ -1,0 +1,78 @@
+{
+  "id": "full",
+  "config": {
+    "version": 1,
+    "profile": "full",
+    "platforms": {
+      "codex": {
+        "enabled": true
+      },
+      "claude": {
+        "enabled": true
+      }
+    },
+    "layers": {
+      "system": {
+        "baselineVersion": "1.0.0",
+        "modules": [
+          "codex",
+          "claude"
+        ]
+      },
+      "team": {
+        "providers": [
+          {
+            "id": "ecc",
+            "materializationMode": "symlink",
+            "skills": [
+              "tdd-workflow",
+              "verification-loop",
+              "coding-standards",
+              "backend-patterns",
+              "security-review",
+              "api-design",
+              "documentation-lookup",
+              "frontend-patterns",
+              "python-patterns",
+              "python-testing",
+              "database-migrations"
+            ]
+          }
+        ]
+      },
+      "project": {
+        "skills": [
+          {
+            "id": "repo-governance",
+            "description": "Generic repository governance and topology guardrails.",
+            "managed": true
+          },
+          {
+            "id": "change-closeout",
+            "description": "Generic repo-local closeout checklist and reporting template.",
+            "managed": true
+          },
+          {
+            "id": "review-handoff",
+            "description": "Generic review handoff and acceptance reminders.",
+            "managed": true
+          }
+        ],
+        "compatPlugin": {
+          "enabled": true,
+          "pluginId": "ai-tool-init-compat"
+        },
+        "extraAgents": [
+          "explorer",
+          "reviewer"
+        ]
+      }
+    },
+    "policies": {
+      "overwriteManagedFiles": false,
+      "drift": "error",
+      "symlink": "relative",
+      "compat": "minimal"
+    }
+  }
+}

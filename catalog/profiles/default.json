@@ -1,0 +1,67 @@
+{
+  "id": "default",
+  "config": {
+    "version": 1,
+    "profile": "default",
+    "platforms": {
+      "codex": {
+        "enabled": true
+      },
+      "claude": {
+        "enabled": true
+      }
+    },
+    "layers": {
+      "system": {
+        "baselineVersion": "1.0.0",
+        "modules": [
+          "codex",
+          "claude"
+        ]
+      },
+      "team": {
+        "providers": [
+          {
+            "id": "ecc",
+            "materializationMode": "symlink",
+            "skills": [
+              "tdd-workflow",
+              "verification-loop",
+              "coding-standards",
+              "backend-patterns",
+              "security-review"
+            ]
+          }
+        ]
+      },
+      "project": {
+        "skills": [
+          {
+            "id": "repo-governance",
+            "description": "Generic repository governance and topology guardrails.",
+            "managed": true
+          },
+          {
+            "id": "change-closeout",
+            "description": "Generic repo-local closeout checklist and reporting template.",
+            "managed": true
+          }
+        ],
+        "compatPlugin": {
+          "enabled": true,
+          "pluginId": "ai-tool-init-compat"
+        },
+        "extraAgents": [
+          "explorer",
+          "reviewer"
+        ]
+      }
+    },
+    "policies": {
+      "overwriteManagedFiles": false,
+      "drift": "error",
+      "symlink": "relative",
+      "compat": "minimal"
+    }
+  }
+}

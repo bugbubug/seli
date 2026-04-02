@@ -1,0 +1,9 @@
+{
+  "id": "codex",
+  "description": "Repo-local Codex baseline templates and agent config.",
+  "modules": [
+    "codex-config",
+    "codex-agents",
+    "codex-skill-readme"
+  ]
+}
