@@ -10,3 +10,4 @@ Recommended examples:
 - team skill indexes
 
 After copying documents here, record them in `../manifest.json` before running `ai-tool-init`.
+Create it from `../manifest.template.json` when needed.

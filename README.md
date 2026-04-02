@@ -17,6 +17,8 @@ Repo-local `Codex` / `Claude Code` scaffolding manager.
 bun install
 bun run typecheck
 bun test
+cp intake/manifest.template.json intake/manifest.json
+# edit intake/manifest.json with your local paths before running
 bun run src/cli.ts plan --project /absolute/path/to/project --intake intake/manifest.json --provider-root ecc=/absolute/path/to/everything-claude-code
 bun run src/cli.ts init --project /absolute/path/to/project --intake intake/manifest.json --provider-root ecc=/absolute/path/to/everything-claude-code
 bun run src/cli.ts update --project /absolute/path/to/project --intake intake/manifest.json --provider-root ecc=/absolute/path/to/everything-claude-code
@@ -53,8 +55,12 @@ The standard intake workspace is:
 intake/
 ├── docs/
 │   └── README.md
-└── manifest.json
+├── manifest.template.json
+└── manifest.json   # local runtime file, gitignored
 ```
+
+`intake/manifest.template.json` is committed as a template.  
+`intake/manifest.json` is local runtime intake and is intentionally gitignored.
 
 `intake/manifest.json` supports:
 

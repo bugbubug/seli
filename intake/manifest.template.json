@@ -17,6 +17,6 @@
   "compatPlugin": true,
   "agentDecisions": [],
   "notes": [
-    "Replace this template with run-specific intake data before executing ai-tool-init."
+    "Copy this file to intake/manifest.json and replace with run-specific intake data before execution."
   ]
 }

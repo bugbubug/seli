@@ -1,2 +1,19 @@
 node_modules/
 .DS_Store
+
+# Local runtime files
+*.log
+*.tmp
+
+# Intake workspace (local, machine-specific input)
+intake/manifest.json
+intake/docs/*
+!intake/docs/README.md
+!intake/manifest.template.json
+
+# Generated state when this repository is used as the target project
+.ai-tool-init/
+.agents/
+.codex/
+.claude/
+plugins/ai-tool-init-compat/
